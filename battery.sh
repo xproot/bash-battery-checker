@@ -40,10 +40,12 @@ If no batteries are specified, all available batteries will be shown.
 EOF
 }
 
+# If the width is less than one, enable text only mode (default width is 0, so this means the terminal did not reply to us asking for the width)
 if [[ "$WIDTH" -lt 1 ]]; then
   TEXT_ONLY=true
 fi
 
+# Toggle colors depending on capabilities (old code? default is color on)
 if [ "$TERM" = "xterm-256color" ]; then
     COLOR=true
 elif [[ "$TERM" = "xterm" ]]; then
@@ -105,7 +107,7 @@ while [[ $# -gt 0 ]]; do
   shift
 done
 
-# Function to calculate the static width dynamically
+# Function to calculate the static width (without including colors)
 calculate_static_width() {
   local battery=$1
   local status=$2
@@ -113,6 +115,7 @@ calculate_static_width() {
   echo $(( ${#battery} + ${#status} + ${#capacity} + 12 ))  # Add fixed characters like ": , % []"
 }
 
+# NOTE: There's way too many of these
 # Function to get color for battery status
 get_status_color() {
   local status=$1
@@ -155,7 +158,7 @@ get_progress_background_color() {
     fi
   fi
 }
-
+# If value < minimum, y e l l o w. Otherwise green!
 get_color_with_minimum() {
   if [ "$COLOR" = true ]; then
     local current=$1
@@ -168,6 +171,7 @@ get_color_with_minimum() {
   fi
 }
 
+# Convert a µ reading to a base unit reading, with decimals!
 unmicro_int() {
   local microunit=$1
   local mainunit=$(( microunit / 1000000 ))
@@ -177,7 +181,7 @@ unmicro_int() {
   echo "$mainunit.$decimalsunit"
 }
 
-# Function to get battery information
+# Function to get battery information (main function?)
 get_battery_info() {
   local battery=$1
   local path="/sys/class/power_supply/$battery"
@@ -188,8 +192,8 @@ get_battery_info() {
   fi
 
   local name=$(cat "$path/manufacturer" 2>/dev/null | tr '\n' ' ' && cat "$path/model_name" 2>/dev/null || echo "N/A")
-  local technology=$(cat "$path/technology" || echo "N/A")
-  local type=$(cat "$path/type" || echo "N/A")
+  local technology=$(cat "$path/technology" 2>/dev/null || echo "N/A")
+  local type=$(cat "$path/type" 2>/dev/null || echo "N/A")
   local status=$(cat "$path/status" 2>/dev/null || echo "N/A")
   local capacity=$(cat "$path/capacity" 2>/dev/null || echo "N/A")
 
@@ -215,7 +219,7 @@ get_battery_info() {
     health_energy=$((100 * energy_full / energy_full_design))
   fi
 
-  # Determine which unit to display (mAh, mWh, or none)
+  # Determine which unit to display (amps, watts, or none)
   local capacity_detail="N/A"
   if [[ -n $charge_now && -n $energy_now ]]; then
     capacity_detail="$(unmicro_int "$charge_now")Ah / $(unmicro_int "$charge_full")Ah and $(unmicro_int "$energy_now")Wh / $(unmicro_int "$energy_full")Wh"
@@ -280,6 +284,7 @@ get_battery_info() {
   fi
 
   # Dynamically calculate the static width and progress bar size
+  # NOTE: this... probably could be done better????
   local static_width=$(calculate_static_width "$battery" "$status" "$capacity")
   local bar_width=$((WIDTH - static_width))
 
@@ -316,6 +321,8 @@ get_battery_info() {
 
   echo -e "$output"
 }
+
+# Main program(?) starts here
 
 # Find all batteries if none specified
 if [[ ${#BATTERIES[@]} -eq 0 ]]; then
