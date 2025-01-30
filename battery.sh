@@ -1,4 +1,4 @@
-!/bin/bash
+#!/bin/bash
 
 # Default options
 COLOR=true
