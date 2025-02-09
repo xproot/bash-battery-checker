@@ -176,6 +176,7 @@ unmicro_int() {
   local microunit=$1
   local mainunit=$(( microunit / 1000000 ))
   local decimalsunit=${microunit:${#mainunit}}
+  [[ "$mainunit" -lt 1 ]] && decimalsunit="$microunit"
   decimalsunit=$(printf "$decimalsunit" | sed 's/0*$//')
   [[ -z "$decimalsunit" ]] && decimalsunit=0
   echo "$mainunit.$decimalsunit"
