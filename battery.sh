@@ -178,7 +178,7 @@ unmicro_int() {
   local decimalsunit=${microunit:${#mainunit}} # Number after the decimal point, in other words, the decimals.
   [[ "$mainunit" -lt 1 ]] && decimalsunit="$microunit" # Characters in the $mainunit variable will always be >0, so this undoes the substring (this could be an if/else)
   decimalsunit=$(printf "$decimalsunit" | sed 's/0*$//') # Removes zeroes on the end, they're redundant.
-  [[ "${#microunit}" -lt 6 ]] && for ((i=1;i<=$(( 6 - ${#microunit} ));i++)); do decimalsunit=0${decimalsunit}; done # Adds zeroes in front, if the microunit variable is smaller than a base unit.
+  [[ "${#microunit}" -lt 6 ]] && [[ "$microunit" -gt 0 ]] && for ((i=1;i<=$(( 6 - ${#microunit} ));i++)); do decimalsunit=0${decimalsunit}; done # Adds zeroes in front, if the microunit variable is smaller than a base unit. The second condition was made due to 0 getting padded by zeroes.
   [[ -z "$decimalsunit" ]] && decimalsunit=0 # If somehow decimalsunit fails to be set until now, it is set to 0.
   echo "$mainunit.$decimalsunit" # "12.0V", for example. The zero is a design choice but it also makes the code simpler.
 }
