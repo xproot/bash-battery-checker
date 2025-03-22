@@ -173,13 +173,14 @@ get_color_with_minimum() {
 
 # Convert a µ reading to a base unit reading, with decimals!
 unmicro_int() {
-  local microunit=$1
-  local mainunit=$(( microunit / 1000000 ))
-  local decimalsunit=${microunit:${#mainunit}}
-  [[ "$mainunit" -lt 1 ]] && decimalsunit="$microunit"
-  decimalsunit=$(printf "$decimalsunit" | sed 's/0*$//')
-  [[ -z "$decimalsunit" ]] && decimalsunit=0
-  echo "$mainunit.$decimalsunit"
+  local microunit=$1 # Base number (assumed in microunits)
+  local mainunit=$(( microunit / 1000000 )) # Number before the decimal point, in other words, the integer.
+  local decimalsunit=${microunit:${#mainunit}} # Number after the decimal point, in other words, the decimals.
+  [[ "$mainunit" -lt 1 ]] && decimalsunit="$microunit" # Characters in the $mainunit variable will always be >0, so this undoes the substring (this could be an if/else)
+  decimalsunit=$(printf "$decimalsunit" | sed 's/0*$//') # Removes zeroes on the end, they're redundant.
+  [[ "${#microunit}" -lt 6 ]] && for ((i=1;i<=$(( 6 - ${#microunit} ));i++)); do decimalsunit=0${decimalsunit}; done # Adds zeroes in front, if the microunit variable is smaller than a base unit.
+  [[ -z "$decimalsunit" ]] && decimalsunit=0 # If somehow decimalsunit fails to be set until now, it is set to 0.
+  echo "$mainunit.$decimalsunit" # "12.0V", for example. The zero is a design choice but it also makes the code simpler.
 }
 
 # Function to get battery information (main function?)
